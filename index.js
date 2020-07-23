@@ -60,7 +60,7 @@ app.get("/api/divers/redux/:login", (req, res) => {
     login,
     (err, result) => {
       if (err || !result[0]) {
-        res.status(500).send('login inexistant');
+        res.status(500).send("login inexistant");
       } else {
         res.json(result);
       }
@@ -90,7 +90,7 @@ app.get("/api/diving", (req, res) => {
     if (err) {
       res.status(500).send(err.message);
     } else {
-      res(result.data);
+      res.json(result);
     }
   });
 });
@@ -98,13 +98,72 @@ app.get("/api/diving", (req, res) => {
 app.get("/api/diving/:idDiving", (req, res) => {
   const idDiving = req.params.idDiving;
   connection.query(
-    "SELECT * FROM diving WHERE id = ?",
+    "SELECT * FROM diving WHERE id_diving = ?",
     idDiving,
     (err, result) => {
       if (err) {
         res.status(500).send(err.message);
       } else {
-        res.json(results);
+        res.json(result);
+      }
+    }
+  );
+});
+
+app.get("/api/diving/recup/:localisation/:date/:duree/:deep", (req, res) => {
+  const localisation = req.params.localisation;
+  const date = req.params.date;
+  const duree = req.params.duree;
+  const deep = req.params.deep;
+  connection.query(
+    "SELECT * FROM diving WHERE localisation = ? AND date_diving = ? AND duration = ? AND deep = ?",
+    [localisation, date, duree, deep],
+    (err, result) => {
+      if (err) {
+        res.status(500).send(err.message);
+      } else {
+        res.json(result);
+      }
+    }
+  );
+});
+
+app.post("/api/diving", (req, res) => {
+  const formData = req.body;
+  connection.query("INSERT INTO diving SET ?", formData, (err, result) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send(err.message);
+    } else {
+      res.sendStatus(200);
+    }
+  });
+});
+
+// BELONG_TO
+app.post("/api/belong-to", (req, res) => {
+  const formData = req.body;
+  connection.query("INSERT INTO belong_to SET ?", formData, (err, result) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send(err.message);
+    } else {
+      res.sendStatus(200);
+    }
+  });
+});
+
+// GET ALL DIVES OF A DIVER
+app.get("/api/divers/:idDiver/dives", (req, res) => {
+  const idDiver = req.params.idDiver;
+  connection.query(
+    "SELECT dr.id_diver, bg.diver_id, bg.diving_id,  DATE_FORMAT(dg.date_diving, '%d/%m/%Y') AS date, dg.hour_diving, dg.deep, dg.duration, dg.gas, dg.localisation FROM diver AS dr JOIN belong_to AS bg ON dr.id_diver=bg.diver_id JOIN diving AS dg ON dg.id_diving=bg.diving_id WHERE id_diver = ? ",
+    idDiver,
+    (err, result) => {
+      if (err) {
+        res.status(500).send(err.message);
+      } else {
+        res.json(result);
       }
     }
   );
